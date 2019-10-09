@@ -1,0 +1,11 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "CodeLens (Launch) - Generals",
+            "request": "launch",
+            "mainClass": "generalsgame.Generals",
+            "projectName": "generalsgame"
+        }
+    ]
+}
