@@ -5,9 +5,10 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
-
-
+import generalsgame.graphics.GraphicsLibrary;
+import generalsgame.GameController;
+import generalsgame.audio.SoundManager;
+import generalsgame.audio.SoundManagerJavaFX;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -33,6 +34,12 @@ public class Generals extends Application {
 	public static final String gameVersion = "Version-0.1-Pandarin_Pomelo";
     public static final Logger logger = Logger.getLogger(Generals.class.getName());
 
+    public static GameController GC;
+
+    public static GraphicsLibrary graphLibrary;
+    public static SoundManager soundManager;
+    public static HashMap<String, Font> fonts;
+
     public boolean running = false;
     public final ArrayList<KeyCode> pressedButtons = new ArrayList<>();
     public final ArrayList<KeyCode> releasedButtons = new ArrayList<>();
@@ -41,8 +48,8 @@ public class Generals extends Application {
 
 
     public static Stage primaryStage;
-    int width = 640;
-    int height = 480;
+    int width = 800;
+    int height = 600;
 
     @Override
     public void start(Stage primaryStage) {
@@ -67,14 +74,25 @@ public class Generals extends Application {
         logger.info("Scene initialized");
         primaryStage.setScene(launchScene);
 
+        setupSoundManager();
+        logger.info("SoundManager initialized");
+        loadFonts();
+        logger.info("Fonts loaded");
+
+
         setupKeyHandlers(primaryStage);
         setupMouseHandles(root);
         setupWindowResizeListeners(launchScene);
 
         logger.info("Game set up");
+        GC = new GameController(gameCanvas, uiCanvas);
+        GC.WIDTH = primaryStage.getWidth();
+        GC.HEIGHT = primaryStage.getHeight();
 
         primaryStage.show();
+        this.loadLibraries(gameCanvas, uiCanvas);
 
+        GC.start();
         running = true;
 
           primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
@@ -107,9 +125,9 @@ public class Generals extends Application {
                 previousNanoTime = currentNanoTime;
                 //Do things:
 
-                //GeneralsGame.tick(elapsedSeconds, pressedButtons, releasedButtons); 
+                GC.tick(elapsedSeconds, pressedButtons, releasedButtons); 
                 releasedButtons.clear();
-                //GeneralsGame.render();
+                GC.render();
                 //System.out.println("FPS : " + (int)(1/elapsedSeconds));
                 uiCanvas.getGraphicsContext2D().setFill(Color.DARKRED);
                 uiCanvas.getGraphicsContext2D().fillText("FPS : " + (int)(1/elapsedSeconds), 0, 20);
@@ -123,6 +141,7 @@ public class Generals extends Application {
         Application.launch();
         logger.info("Generals game ended");
     }
+
 
 
     private void setupKeyHandlers(Stage primaryStage) {
@@ -151,6 +170,39 @@ public class Generals extends Application {
                 //logger.log(Level.INFO, "{0} released", code);
             }
         });
+    }
+
+    private void loadFonts() {
+        fonts = new HashMap<>();
+        Font alagard = Font.loadFont(getClass().getResourceAsStream("/fonts/alagard.ttf"), 20);
+        fonts.put("alagard", alagard);
+        Font alagard20 = Font.loadFont(getClass().getResourceAsStream("/fonts/alagard.ttf"), 20);
+        fonts.put("alagard20", alagard20);
+        Font alagard12 = Font.loadFont(getClass().getResourceAsStream("/fonts/alagard.ttf"), 12);
+        fonts.put("alagard12", alagard12);
+        Font romulus = Font.loadFont(getClass().getResourceAsStream("/fonts/romulus.ttf"), 20);
+        fonts.put("romulus", romulus);   
+        Font romulus20 = Font.loadFont(getClass().getResourceAsStream("/fonts/romulus.ttf"), 20);
+        fonts.put("romulus20", romulus20); 
+        Font romulus12 = Font.loadFont(getClass().getResourceAsStream("/fonts/romulus.ttf"), 12);
+        fonts.put("romulus12", romulus12); 
+    }
+
+    private static void setupSoundManager() {
+        Generals.soundManager = new SoundManagerJavaFX(5);
+    }
+    
+
+    private void loadLibraries (Canvas gameCanvas, Canvas uiCanvas) {
+        setupGraphicsLibrary();
+        logger.info("Graphics library initialized");
+
+    }
+
+    private static void setupGraphicsLibrary() {
+        Generals.graphLibrary = new GraphicsLibrary();
+        GraphicsLibrary.initializeGraphicsLibrary(graphLibrary);
+        
     }
 
 
