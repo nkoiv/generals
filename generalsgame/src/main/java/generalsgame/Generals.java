@@ -223,31 +223,31 @@ public class Generals extends Application {
         root.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent me) {
-                //GeneralsGame.handleMouseEvent(me);
+                GC.handleMouseEvent(me);
             }
         });
         root.setOnMouseReleased(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent me) {
-                //GeneralsGame.handleMouseEvent(me);
+                GC.handleMouseEvent(me);
             }
         });
         root.setOnMousePressed(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent me) {
-                //GeneralsGame.handleMouseEvent(me);
+                GC.handleMouseEvent(me);
             }
         });
         root.setOnMouseMoved(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent me) {
-                //GeneralsGame.handleMouseEvent(me);
+                GC.handleMouseEvent(me);
             }
         });
         root.setOnMouseDragged(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent me) {
-                //GeneralsGame.handleMouseEvent(me);
+                GC.handleMouseEvent(me);
             }
         });
         

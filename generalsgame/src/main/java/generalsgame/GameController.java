@@ -60,6 +60,8 @@ import generalsgame.gameobjects.WorldMap;
       //gameStates.put(BATTLE, new BattleState(this));
 
       this.moveToState(MAINMENU);
+      this.running = true;
+      this.loading = false;
       currentState.enter();
       
    }
@@ -128,6 +130,12 @@ import generalsgame.gameobjects.WorldMap;
            toggleScale=false;
        }
    }
+
+   public void handleMouseEvent(MouseEvent me) {
+      //Pass the mouse event to the current gamestate
+      if (!this.running || this.loading || this.currentState == null) return;
+      currentState.handleMouseEvent(me);
+  }
 
    public void updateUI() {
       if (this.running) {
