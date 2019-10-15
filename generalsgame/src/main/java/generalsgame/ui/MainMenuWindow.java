@@ -30,8 +30,8 @@ public class MainMenuWindow extends TiledPanel {
     }
     
     private void initializeMenuButtons() {
-        NewGameButton menubutton1 = new NewGameButton(super.getParent().getGC(), this.parent);
-        ResumeGameButton menubutton2 = new ResumeGameButton(super.getParent().getGC());
+        JoinLobbyButton menubutton1 = new JoinLobbyButton(super.getParent().getGC(), this.parent);
+        SinglePlayerButton menubutton2 = new SinglePlayerButton(super.getParent().getGC());
         OptionsButton menubutton3 = new OptionsButton();
         QuitButton menubutton4 = new QuitButton("Quit game", 200, 60);
         super.addSubComponent(menubutton1);
@@ -40,12 +40,12 @@ public class MainMenuWindow extends TiledPanel {
         super.addSubComponent(menubutton4);
     }
     
-    private class NewGameButton extends TextButton {
+    private class JoinLobbyButton extends TextButton {
         private final GameController gc;
         private final GameState state;
         
-        public NewGameButton(GameController gc, GameState state) {
-            super("New game", 200, 60);
+        public JoinLobbyButton(GameController gc, GameState state) {
+            super("Join lobby", 200, 60);
             this.gc = gc;
             this.state = state;
         }
@@ -59,22 +59,30 @@ public class MainMenuWindow extends TiledPanel {
     }
     
  
-    private class ResumeGameButton extends TextButton {
+    private class SinglePlayerButton extends TextButton {
         private final GameController gc;
         
-        public ResumeGameButton(GameController gc) {
-            super("Resume game", 200, 60);
+        public SinglePlayerButton(GameController gc) {
+            super("Single player test", 200, 60);
             this.gc = gc;
+        }
+
+        private void newGame() {
+            //gc.setLoadingScreen(new LoadingScreen("Starting game", 10));
+            Task task = new Task<Void>() {
+                @Override public Void call() {
+                    gc.newGame();
+                    return null;
+                }
+            };
+            new Thread(task).start();
+            
         }
         
         @Override
         public void buttonPress() {
             Generals.logger.log(Level.INFO, "{0} was clicked", this.getName());
-            if (!this.gc.running) {
-                //No game to resume
-            } else {
-                //this.gc.moveToState(GameController.BATTLE);
-            }
+            this.newGame();
         }
         
     }

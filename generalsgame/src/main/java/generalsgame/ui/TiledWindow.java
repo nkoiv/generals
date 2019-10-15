@@ -221,7 +221,7 @@ public class TiledWindow extends UIComponent{
         
         @Override
         protected void buttonPress() {
-            Generals.GC.currentState.closePopUpWindows();
+            Generals.game.currentState.closePopUpWindows();
             this.tw.close();
         }
         

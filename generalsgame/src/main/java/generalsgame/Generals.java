@@ -34,7 +34,8 @@ public class Generals extends Application {
 	public static final String gameVersion = "Version-0.1-Pandarin_Pomelo";
     public static final Logger logger = Logger.getLogger(Generals.class.getName());
 
-    public static GameController GC;
+    public static GameController game;
+    public static int TILESIZE = 32;
 
     public static GraphicsLibrary graphLibrary;
     public static SoundManager soundManager;
@@ -85,14 +86,14 @@ public class Generals extends Application {
         setupWindowResizeListeners(launchScene);
 
         logger.info("Game set up");
-        GC = new GameController(gameCanvas, uiCanvas);
-        GC.WIDTH = primaryStage.getWidth();
-        GC.HEIGHT = primaryStage.getHeight();
+        game = new GameController(gameCanvas, uiCanvas);
+        game.WIDTH = primaryStage.getWidth();
+        game.HEIGHT = primaryStage.getHeight();
 
         primaryStage.show();
         this.loadLibraries(gameCanvas, uiCanvas);
 
-        GC.start();
+        game.start();
         running = true;
 
           primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
@@ -125,9 +126,9 @@ public class Generals extends Application {
                 previousNanoTime = currentNanoTime;
                 //Do things:
 
-                GC.tick(elapsedSeconds, pressedButtons, releasedButtons); 
+                game.tick(elapsedSeconds, pressedButtons, releasedButtons); 
                 releasedButtons.clear();
-                GC.render();
+                game.render();
                 //System.out.println("FPS : " + (int)(1/elapsedSeconds));
                 uiCanvas.getGraphicsContext2D().setFill(Color.DARKRED);
                 uiCanvas.getGraphicsContext2D().fillText("FPS : " + (int)(1/elapsedSeconds), 0, 20);
@@ -223,31 +224,31 @@ public class Generals extends Application {
         root.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent me) {
-                GC.handleMouseEvent(me);
+                game.handleMouseEvent(me);
             }
         });
         root.setOnMouseReleased(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent me) {
-                GC.handleMouseEvent(me);
+                game.handleMouseEvent(me);
             }
         });
         root.setOnMousePressed(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent me) {
-                GC.handleMouseEvent(me);
+                game.handleMouseEvent(me);
             }
         });
         root.setOnMouseMoved(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent me) {
-                GC.handleMouseEvent(me);
+                game.handleMouseEvent(me);
             }
         });
         root.setOnMouseDragged(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent me) {
-                GC.handleMouseEvent(me);
+                game.handleMouseEvent(me);
             }
         });
         

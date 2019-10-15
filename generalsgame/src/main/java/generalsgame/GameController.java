@@ -9,20 +9,21 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
-
+import generalsgame.gamestate.BattleState;
 import generalsgame.gamestate.GameState;
 import generalsgame.gamestate.MainMenuState;
-import generalsgame.gameobjects.WorldMap;
+
 
 /**
- * GameController is the main workhorse behind GeneralsGame
- * The GameController is generally called from Generals (the view of the game)
+ * GameController is the main workhorse behind GeneralsGame,
+ * wrapping the various gamestates (lobby, battle...) together.
+ * The GameController is generally called from Generals (the view of the game).
  */
 
  public class GameController {
    public boolean running = false;
    
-   private WorldMap currentWorldMap;
+   private BattleMap currentMap;
 
    private Canvas gameCanvas;
    private Canvas uiCanvas;
@@ -86,10 +87,20 @@ import generalsgame.gameobjects.WorldMap;
       switch (gameStateNumber) {
           case MAINMENU: gameStates.put(MAINMENU, new MainMenuState(this)) ;break;
           //case LOBBY: gameStates.put(LOBBY, new LobbyState(this)); break;
-          //case BATTLE: gameStates.put(BATTLE, new BattleState(this)); break;
+          case BATTLE: gameStates.put(BATTLE, new BattleState(this)); break;
           case LOADSCREEN: Generals.logger.warning("Tried to enter loadscreen!"); break;
           default: Generals.logger.warning("Unknown gamestate!") ;break;
       }
+   }
+
+   /**
+    * Initialize a new game session 
+    *   
+    */
+   public void newGame() {
+
+        moveToState(GameController.BATTLE);
+        
    }
 
     /**
@@ -142,6 +153,10 @@ import generalsgame.gameobjects.WorldMap;
          Generals.logger.info("Updating UI");
          currentState.updateUI();
       }
+   }
+
+   public BattleMap getCurrentMap() {
+       return this.currentMap;
    }
 
    public Canvas getGameCanvas() {

@@ -22,9 +22,8 @@ import javafx.scene.input.MouseEvent;
  * GameState can be considered as the Controller in an MVC model.
  * Planned states include stuff such as:
  * MainMenu
- * WorldMap
- * Location
- * Town
+ * Lobby
+ * Battle
  * @author nikok
  */
 public interface GameState {
