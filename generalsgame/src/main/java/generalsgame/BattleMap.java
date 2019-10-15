@@ -5,6 +5,10 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Stack;
+import java.util.logging.Level;
+import java.util.Iterator;
+
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
@@ -24,6 +28,8 @@ public class BattleMap {
     private ArrayList<MapObject> lastRenderedMapObjects = new ArrayList<>();
     private HashMap<Integer, HashSet> creatureSpatial; //New idea for lessening collision detection load
     private HashMap<Integer, HashSet> structureSpatial; //New idea for lessening collision detection load
+    private final HashMap<Integer, MapObject> mobs = new HashMap<>();
+    private int nextID = 1;
     private ArrayList<Creature> creatures;
     private ArrayList<Structure> structures;
     private List<MapObject> targets;
@@ -34,7 +40,18 @@ public class BattleMap {
     private MapObject screenFocus;
     
     public BattleMap() {
+
+        this.creatures = new ArrayList<>();
+        this.structures = new ArrayList<>();
+
         this.name = "TestMap";
+        this.currentZone = new BGZone(new Image("/images/pocmap.png"));
+
+        Creature testUnit = new Creature("TestUnit", new Image("/images/Unit/medievalUnit_10.png"));
+        this.addCreature(testUnit, 200, 200);
+        this.screenFocus = testUnit;
+
+        this.localizeMap();
     }
 
     public String getName() {
@@ -48,6 +65,155 @@ public class BattleMap {
         return this.lastOffsets[1];
     }
     
+    /**
+     * Construct the little things needed to make
+     * the map playable (collisionmaps, lights...)
+     */
+    private void localizeMap() {
+        this.collisionMap = new CollisionMap(this, Generals.TILESIZE);
+        Generals.logger.info("Collisionmap generated");
+        this.collisionMap.setStructuresOnly(true);
+        Generals.logger.info("CollisionMap set to structures only");
+        this.collisionMap.updateCollisionLevels();
+        Generals.logger.info("Collisionlevels updated");
+        this.collisionMap.printMapToConsole();
+        this.pathFinder = new PathFinder(this.collisionMap, 100, true);
+        this.targets = new ArrayList<>();
+        this.creatureSpatial = new HashMap<>();
+        this.structureSpatial = new HashMap<>();
+        //this.mobQuadTree = new QuadTree(0, new Rectangle(0,0,this.map.getWidth(),this.map.getHeight()));
+        Generals.logger.log(Level.INFO, "Map ({0}x{1}) localized", new Object[]{currentZone.getWidth(), currentZone.getHeight()});
+    }
+
+
+    /**
+     * Update is the main "tick" of the Location.
+     * Movement, combat and triggers should all be handled here
+     * 
+     * If a Server is given as argument, the update operations
+     * done are pushed to the servers update stack, to be relayed
+     * to clients.
+     * @param time Time since the last update
+     * TODO: @param networking Peer network to relay the updates to
+     */
+    public void update (double time) {
+        //Update all creatures with movement etc
+        if (!this.creatures.isEmpty()) {
+            for (Creature mob : this.creatures) { //Mobs do whatever mobs do
+                mob.update(time);
+            }
+        }
+
+        this.fullCleanup(true, true, true);
+    }
+
+    public void fullCleanup(boolean cleanCreatures, boolean cleanStructures, boolean cleanEffects) {
+        if (cleanCreatures) creatureCleanup();
+        if (cleanStructures) structureCleanup();
+        this.updateCreatureSpatial();
+        this.collisionMap.updateCollisionLevels();
+    }
+
+    /**
+     * structureCleanup cleans all the "removable"
+     * flagged structures.
+     */
+    private Stack<Integer> structureCleanup() {
+        //Structure cleanup
+        Stack<Integer> removedStructureIDs = new Stack<>();
+        if (!this.structures.isEmpty()) {
+            ArrayList<Wall> removedWalls = new ArrayList();
+            Iterator<Structure> structureIterator = structures.iterator(); //Cleanup of mobs
+            while (structureIterator.hasNext()) {
+                MapObject mob = structureIterator.next();
+                if (mob.isRemovable()) {
+                    if (mob instanceof Wall) {
+                        removedWalls.add((Wall)mob);
+                        //Update the surrounding walls as per needed
+                        //this.updateWallsAt(mob.getCenterXPos(), mob.getCenterYPos());   
+                    }
+                    structureIterator.remove();
+                    this.mobs.remove(mob.getID());
+                    removedStructureIDs.add(mob.getID());
+                    this.pathFinder.setMapOutOfDate(true);
+                    if (this.targets.contains(mob)) this.targets.remove(mob);
+                }
+            }  
+            this.restructureWalls(removedWalls);
+        }
+        
+        return removedStructureIDs;
+    }
+    
+    /**
+    * creatureCleanup cleans all the "removable"
+    * flagged creatures.
+    */
+    private Stack<Integer> creatureCleanup() {
+        //Creature cleanup
+        Stack<Integer> removedCreatureIDs = new Stack<>();
+        if (!this.creatures.isEmpty()) {
+            Iterator<Creature> creatureIterator = creatures.iterator(); //Cleanup of mobs
+            while (creatureIterator.hasNext()) {
+                MapObject mob = creatureIterator.next();
+                if (mob.isRemovable()) {
+                    creatureIterator.remove();
+                    int mobID = mob.getID();
+                    this.mobs.remove(mobID);
+                    removedCreatureIDs.add(mobID);
+                    //this.pathFinder.setMapOutOfDate(true); //Creatures are not on pathFindermap atm
+                    if (this.targets.contains(mob)) this.targets.remove(mob);
+                }
+            }     
+        }
+        return removedCreatureIDs;
+    }
+
+    private void restructureWalls (ArrayList<Wall> removedWalls) {
+        if (removedWalls.isEmpty()) return;
+        for (Wall w : removedWalls) {
+            updateWallsAt(w.getCenterXPos(), w.getCenterYPos());
+        }
+    }
+
+    /**
+     * If a wall gets added or removed, the walls around it
+     * need to be updated accordingly
+     * TODO: This is probably pointless stuff
+     * @param xCenterPos xCenter of the happening
+     * @param yCenterPos yCenter of the happening
+     */
+    private void updateWallsAt(double xCenterPos, double yCenterPos) {
+        //ArrayList<MapObject> surroundingWalls = new ArrayList();
+        //boolean[] boolwalls = new boolean[8];
+        /*
+         [0][1][2]
+         [3]   [4]   
+         [5][6][7]
+        */
+        
+        //Note: It's okay to add Nulls here (most will be). Instanceof will take care of that
+        //Cardinal directions
+        MapObject mob;
+        mob = (this.getMobAtLocation(xCenterPos-Generals.TILESIZE, yCenterPos)); //Left
+        if (mob instanceof Wall) {Wall w = (Wall)mob; w.removeNeighbour(4); w.updateGraphicsBasedOnNeighbours();}
+        mob = (this.getMobAtLocation(xCenterPos+Generals.TILESIZE, yCenterPos)); //Right
+        if (mob instanceof Wall) {Wall w = (Wall)mob; w.removeNeighbour(3); w.updateGraphicsBasedOnNeighbours();}
+        mob = (this.getMobAtLocation(xCenterPos, yCenterPos-Generals.TILESIZE)); //Up
+        if (mob instanceof Wall) {Wall w = (Wall)mob; w.removeNeighbour(6); w.updateGraphicsBasedOnNeighbours();}
+        mob = (this.getMobAtLocation(xCenterPos, yCenterPos+Generals.TILESIZE)); //Down
+        if (mob instanceof Wall) {Wall w = (Wall)mob; w.removeNeighbour(1); w.updateGraphicsBasedOnNeighbours();}
+        //Diagonal directions
+        mob = (this.getMobAtLocation(xCenterPos-Generals.TILESIZE, yCenterPos-Generals.TILESIZE)); //UpLeft
+        if (mob instanceof Wall) {Wall w = (Wall)mob; w.removeNeighbour(7); w.updateGraphicsBasedOnNeighbours();}
+        mob = (this.getMobAtLocation(xCenterPos+Generals.TILESIZE, yCenterPos-Generals.TILESIZE)); //UpRight
+        if (mob instanceof Wall) {Wall w = (Wall)mob; w.removeNeighbour(5); w.updateGraphicsBasedOnNeighbours();}
+        mob = (this.getMobAtLocation(xCenterPos-Generals.TILESIZE, yCenterPos+Generals.TILESIZE)); //DownLeft
+        if (mob instanceof Wall) {Wall w = (Wall)mob; w.removeNeighbour(2); w.updateGraphicsBasedOnNeighbours();}
+        mob = (this.getMobAtLocation(xCenterPos+Generals.TILESIZE, yCenterPos+Generals.TILESIZE)); //DownRight
+        if (mob instanceof Wall) {Wall w = (Wall)mob; w.removeNeighbour(0); w.updateGraphicsBasedOnNeighbours();}
+
+    }
 
     /**
      * General render method for the location, called 60 times per second
@@ -63,7 +229,7 @@ public class BattleMap {
         */
         double xOffset = getxOffset(gc, screenFocus.getXPos());
         double yOffset = getyOffset(gc, screenFocus.getYPos());
-        //Mists.logger.info("Offset: "+xOffset+","+yOffset);
+        //Generals.logger.info("Offset: "+xOffset+","+yOffset);
         this.renderMap(gc, xOffset, yOffset);
         this.lastRenderedMapObjects = this.renderMobs(gc, xOffset, yOffset);
         //this.renderLights(sc, lastRenderedMapObjects, xOffset, yOffset);
@@ -132,7 +298,7 @@ public class BattleMap {
         this.currentZone.render(-xOffset, -yOffset, gc);
     }
 
-/**
+    /**
      * xOffset is calculated from the position of the target in
      * regards to the current window width. If the target would be
      * outside viewable area, it's given offset to keep it inside the bounds
@@ -188,6 +354,7 @@ public class BattleMap {
      * @return Creature found at the coordinates
      */
     public MapObject getMobAtLocation(double xCoor, double yCoor) {
+        Generals.logger.info("Trying to find a mob at location " + xCoor + " x " + yCoor);
         MapObject mobAtLocation = null;
         int spatialID = this.getSpatial(xCoor, yCoor);
         if (!this.creatureSpatial.isEmpty()) {
@@ -197,12 +364,16 @@ public class BattleMap {
                     if (xCoor >= mob.getXPos() && xCoor <= mob.getXPos()+mob.getWidth() &&
                             yCoor >= mob.getYPos() && yCoor <= mob.getYPos()+mob.getHeight()) {
                             //Do a pixelcheck on the mob;
-                            //if (Sprite.pixelCollision(xCoor, yCoor, Mists.pixel, mob.getXPos(), mob.getYPos(), mob.getSprite().getImage())) {
+                            //if (Sprite.pixelCollision(xCoor, yCoor, Generals.pixel, mob.getXPos(), mob.getYPos(), mob.getSprite().getImage())) {
                             return mob;
                             //}   
                         }
                 }
+            } else {
+                Generals.logger.info("Spatial was null!");
             }
+        } {
+            Generals.logger.info("Creature spatial was empty");
         }
         Structure s = (getStructureAtLocation(xCoor, yCoor));
         if (s!=null) mobAtLocation = s;
@@ -319,6 +490,16 @@ public class BattleMap {
         return this.creatures;
     }
 
+    /**
+     * The target of the screen focus is what the camera follows.
+     * The view of the location is centered on this target (normally the player)
+     * @param focus MapObject to focus on
+     */
+    public void setScreenFocus(MapObject focus) {
+        this.screenFocus = focus;
+    }
+
+
     public void setTarget(MapObject mob) {
         this.targets.clear();
         if (mob!=null)this.targets.add(mob);
@@ -338,6 +519,162 @@ public class BattleMap {
 
     public Zone getZone() {
         return this.currentZone;
+    }
+
+       /**
+    * Returns the PathFinder for this Location
+    * @return The PathFinder for this location
+    */
+    public PathFinder getPathFinder() {
+        if (this.pathFinder == null) this.pathFinder = new PathFinder(this.collisionMap, 50, true);
+        return this.pathFinder;
+    }
+    
+    /**
+     * Give the MapObject an unique location-specific ID-number
+     * @param mob MapObject to set the ID to
+     */
+    private void giveID(MapObject mob) {
+        if (mob == null) return;
+        if (nextID == Integer.MAX_VALUE) nextID = Integer.MIN_VALUE;
+        mob.setID(this.nextID);
+        nextID++;
+        if (nextID == 0) {
+            Generals.logger.warning("Out of MapObject IDs, cleaning up");
+            this.cleanupIDs();
+        } 
+    }
+    
+    /**
+     * If ID's run out, clean up the ID list.
+     */
+    private void cleanupIDs() {
+        this.nextID = 1;
+        if (this.mobs.isEmpty()) return;
+        for (Integer mobID : this.mobs.keySet()) {
+            this.giveID(this.mobs.get(mobID));
+        }
+        //TODO: Inform possible clients that ID's have changed.
+    }
+    
+    public int peekNextID() {
+        return this.nextID;
+    }
+    
+    public void setNextID(int id) {
+        this.nextID = id;
+    }
+
+    public void clearAllMapObjects() {
+        for (int mobID : this.mobs.keySet()) {
+            this.removeMapObject(mobID);
+        }
+    }
+    
+    public void removeMapObject(int mobID) {
+        MapObject mob = this.mobs.get(mobID);
+        if (mob!=null) this.removeMapObject(mob);            
+    }
+    
+    private void removeMapObject(MapObject mob) {
+        Generals.logger.info("removeMapObject "+mob.getName());
+        if (mob instanceof Structure) {
+            this.structures.remove((Structure)mob);
+        }
+        if (mob instanceof Creature) {
+            this.creatures.remove((Creature)mob);
+        }
+        this.mobs.remove(mob.getID());
+    }
+    
+    /**
+     * Insert a mob into the Location with given mobID.
+     * If this mobID is already taken by another object,
+     * the previous object is removed to make room for the new one.
+     * @param mob MapObject to add to the Location
+     * @param mobID LocationID to give to the new MapObject
+     */
+    public void addMapObject(MapObject mob, int mobID) {
+    	if (this.getMapObject(mobID) != null) this.removeMapObject(mobID);
+        if (mob == null) return;
+        mob.setID(mobID);
+        if (mob instanceof Structure) {
+            this.structures.add((Structure)mob);
+        }
+        if (mob instanceof Creature) {
+            this.creatures.add((Creature)mob);
+        }
+        this.mobs.put(mob.getID(), mob);
+        mob.setBattleMap(this);
+    }
+        
+    /**
+     * Generic MapObject insertion.
+     * @param mob MapObject to insert in the map
+     */
+    public void addMapObject(MapObject mob) {
+        if (mob == null) {
+            Generals.logger.warning("Tried to add NULL mob to "+this.getName());
+        }
+        this.giveID(mob);
+        if (mob instanceof Structure) {
+            this.structures.add((Structure)mob);
+        }
+        if (mob instanceof Creature) {
+            this.creatures.add((Creature)mob);
+        }
+        mob.setBattleMap(this);
+    }
+    
+    /**
+     * Pull the creature by ID from the general MOBs table
+     * @param ID Location-specific Identifier for the mob
+     * @return MapObject if it exists in the location
+     */
+    public MapObject getMapObject(int ID) {
+        return this.mobs.get(ID);
+    }
+    
+
+    public void addMapObject(MapObject mob, double xPos, double yPos) {
+        if (mob == null) return;
+        addMapObject(mob);
+        mob.setPosition(xPos, yPos);
+        if (this.pathFinder != null && mob instanceof Structure) this.pathFinder.setMapOutOfDate(true);
+    }
+    
+    /**
+    * Adds a Structure to the location
+    * @param s The structure to be added
+    * @param xPos Position for the structure on the X-axis
+    * @param yPos Position for the structure on the Y-axis
+    */
+    private void addStructure(Structure s, double xPos, double yPos) {
+        if (!this.structures.contains(s)) {
+            this.addMapObject(s);
+        }
+        s.setBattleMap(this);
+        s.setPosition(xPos, yPos);
+        if (this.pathFinder != null) this.pathFinder.setMapOutOfDate(true);
+    }
+    
+    /** Adds a Creature to the location
+    * @param c The creature to be added
+    * @param xPos Position for the creature on the X-axis
+    * @param yPos Position for the creature on the Y-axis
+    */
+    private void addCreature(Creature c, double xPos, double yPos) {
+        if (!this.creatures.contains(c)) {
+            this.addMapObject(c);
+        } else {
+            //No need to re-add the creature if it's already in. Just give it a new ID.
+            this.removeMapObject(c);
+            this.giveID(c);
+            Generals.logger.log(Level.WARNING, "Tried to add a {3} to {0} but {3} was already in it. Gave the {3} new ID: {1}", new Object[]{this.getName(), c.getID(), c.getName()});
+            this.addMapObject(c);
+        }
+        c.setBattleMap(this);
+        c.setPosition(xPos, yPos);
     }
 
     private class CoordinateComparator implements Comparator<MapObject> {

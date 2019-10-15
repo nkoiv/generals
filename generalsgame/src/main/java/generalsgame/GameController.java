@@ -53,12 +53,14 @@ import generalsgame.gamestate.MainMenuState;
 
       this.gameStates = new HashMap<>();
 
+      this.currentMap = new BattleMap();
+
    }
 
    public void start() {
       gameStates.put(MAINMENU, new MainMenuState(this));
       //gameStates.put(LOBBY, new LobbyState(this));
-      //gameStates.put(BATTLE, new BattleState(this));
+      gameStates.put(BATTLE, new BattleState(this));
 
       this.moveToState(MAINMENU);
       this.running = true;

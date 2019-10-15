@@ -30,6 +30,7 @@ public class BGZone implements Zone {
     
     @Override
     public void render(double xOffset, double yOffset, GraphicsContext gc) {
+        
         gc.drawImage( image, xOffset, yOffset );
     }
 

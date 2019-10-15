@@ -168,6 +168,7 @@ public abstract class Overlay {
             sb.append("\n");
         }
         String text = sb.toString();
+        //Generals.logger.info("Generated infotext: " +text);
         return text;
     }
 }

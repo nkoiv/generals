@@ -73,6 +73,7 @@ public class BattleState implements GameState {
         if (game.getCurrentMap() == null) {
             return;
         }
+        game.getCurrentMap().update(time);
         this.sct.tick(time);
     }
     
@@ -115,7 +116,7 @@ public class BattleState implements GameState {
         //Render the UI
         uigc.clearRect(0, 0, screenWidth, screenHeight);
         if (this.game.getCurrentMap() != null) {
-            //this.updateInfoBox();
+            this.updateInfoBox();
             this.sct.render(uigc);
         }
 
@@ -138,6 +139,20 @@ public class BattleState implements GameState {
     }
 
 
+
+    public void loadDefaultUI() {
+        this.uiComponents.clear();
+        this.drawOrder.clear();
+        this.infobox = new TextPanel(this, "InfoBox", 250, 150, game.WIDTH-300, game.HEIGHT-500, Generals.graphLibrary.getImageSet("panelBeigeLight"));
+        this.infobox.addCloseButton();
+
+        this.inConsole = false;
+
+        this.sct = new CombatPopup();
+        
+    }
+    
+
     @Override
     public GameController getGC() {
         return this.game;
@@ -151,10 +166,21 @@ public class BattleState implements GameState {
     @Override
     public void enter() {
         try {
-            Generals.soundManager.playMusic("menu");
+            Generals.soundManager.playMusic("dungeon");
         }catch (Exception e) {
             
         }
+        this.loadDefaultUI();
+        this.paused = false;
+    }
+
+    
+    private void updateInfoBox() {
+        if (game.getCurrentMap().getTargets().size() < 1) {
+            if (this.uiComponents.containsValue(this.infobox)) this.removeUIComponent("InfoBox");
+            return;
+        }
+        this.infobox.setText(Overlay.generateInfoBoxText(game.getCurrentMap().getTargets().get(0)));
     }
 
     @Override
@@ -207,8 +233,8 @@ public class BattleState implements GameState {
         this.lastDragX = 0; this.lastDragY = 0;
         if(!mouseClickOnUI(me)){
             //If not, give the click to the underlying gameLocation
-            //Mists.logger.info("Click didnt land on an UI button");
-            this.mouseClickOnLocation(me);
+            Generals.logger.info("Click didnt land on an UI button");
+            this.mouseClickOnMap(me);
         }
     }
     /**
@@ -229,7 +255,7 @@ public class BattleState implements GameState {
         
     }
 
-    private boolean mouseClickOnLocation(MouseEvent me) {
+    private boolean mouseClickOnMap(MouseEvent me) {
         if (game.getCurrentMap() == null)
             return false;
         double clickX = me.getX();
@@ -241,10 +267,6 @@ public class BattleState implements GameState {
         if (me.getButton() == MouseButton.PRIMARY && me.getEventType() == MouseEvent.MOUSE_RELEASED)
             movingWithMouse = false;
         if (me.getButton() == MouseButton.SECONDARY && me.getEventType() == MouseEvent.MOUSE_RELEASED) {
-            // Secondary mouse button teleports player
-            // Mists.logger.info("Clicked right mousebutton at "+clickX+","+clickY+" -
-            // moving player there");
-            // game.locControls.teleportPlayer(clickX+xOffset, clickY+yOffset);
             return true;
         }
         if (me.getButton() == MouseButton.PRIMARY && me.getEventType() == MouseEvent.MOUSE_RELEASED) {
@@ -252,10 +274,16 @@ public class BattleState implements GameState {
             // game.locControls.playerAttackMove(clickX+xOffset, clickY+yOffset);
             // Select a target if possible
             MapObject mob = game.getCurrentMap().getMobAtLocation(xOffset + clickX, yOffset + clickY);
-           
+            if (mob == null) {
+                //Generals.logger.info("No mob found at "+ (xOffset + clickX) + " x " + (yOffset + clickY) );
+            } else {
+                //Generals.logger.info("Clicked a mob");
+                //Generals.logger.info("Mob was: "+mob.getName());
+            }
             if (toggleTarget(clickX, clickY)) return true;
         }
         //Click didn't do anything
+        //Generals.logger.info("Clicked battle map, but it didn't land on anything");
         return false;
     }
 

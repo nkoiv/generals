@@ -29,6 +29,9 @@ public class Creature extends MapObject {
         private int currentHealth;
         private int maxHealth;
 
+        public Creature (String name, Image image) {
+            super(name, new Sprite(image));
+        }
 
         public int getHealth() {
             return this.currentHealth;
@@ -37,5 +40,31 @@ public class Creature extends MapObject {
         public int getMaxHealth() {
             return this.maxHealth;
         }
+
+
+        @Override
+    public String[] getInfoText() {
+        String[] s = new String[]{
+            this.name + " - BaseID: "+this.templateID ,
+            "ID "+this.IDinMap+" @ "+this.map.getName(),
+            "X:"+((int)this.getXPos())+" Y:"+((int)this.getYPos()),
+            this.getHealth() + "/"+this.getMaxHealth()+" hp",
+        };
+        return s;
+    }
+    
+    @Override
+    public String toString() {
+        String n = this.name + " @ "+"|"+(int)this.getCenterXPos()+"x"+(int)this.getCenterYPos()+"|";
+        return n;
+    }
+    
+    public String longString() {
+        String n = this.name + " @ "+"|"+(int)this.getCenterXPos()+"x"+(int)this.getCenterYPos()+"|\n";
+        n = n+this.map+"\n";
+        n = n+"Health: "+this.getHealth()+" / "+this.getMaxHealth()+"\n";
+        
+        return n;
+    }
     
     }
