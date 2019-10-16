@@ -22,7 +22,7 @@ import generalsgame.gamestate.MainMenuState;
 
  public class GameController {
    public boolean running = false;
-   
+   private int currentGameTime;
    private BattleMap currentMap;
 
    private Canvas gameCanvas;
@@ -65,6 +65,7 @@ import generalsgame.gamestate.MainMenuState;
       this.moveToState(MAINMENU);
       this.running = true;
       this.loading = false;
+      this.currentGameTime = 0;
       currentState.enter();
       
    }
@@ -113,9 +114,10 @@ import generalsgame.gamestate.MainMenuState;
     * @param pressedButtons Buttons currently pressed down
     * @param releasedButtons Buttons recently released
     */
-    public void tick(double time, ArrayList<KeyCode> pressedButtons, ArrayList<KeyCode> releasedButtons) {
+    public void tick(double time,int elapsedSeconds, ArrayList<KeyCode> pressedButtons, ArrayList<KeyCode> releasedButtons) {
+    this.currentGameTime = elapsedSeconds;
       if (currentState == null) return;
-       currentState.tick(time, pressedButtons, releasedButtons);
+       currentState.tick(time, elapsedSeconds, pressedButtons, releasedButtons);
    }
    
    /**
@@ -155,6 +157,10 @@ import generalsgame.gamestate.MainMenuState;
          Generals.logger.info("Updating UI");
          currentState.updateUI();
       }
+   }
+
+   public int getCurrentTime() {
+       return this.currentGameTime;
    }
 
    public BattleMap getCurrentMap() {

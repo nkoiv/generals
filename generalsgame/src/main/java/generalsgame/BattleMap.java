@@ -2,6 +2,7 @@ package generalsgame;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -90,17 +91,15 @@ public class BattleMap {
      * Update is the main "tick" of the Location.
      * Movement, combat and triggers should all be handled here
      * 
-     * If a Server is given as argument, the update operations
-     * done are pushed to the servers update stack, to be relayed
-     * to clients.
      * @param time Time since the last update
+     * @param elapsedSeconds Seconds passed since game started, used to sync movement completion
      * TODO: @param networking Peer network to relay the updates to
      */
-    public void update (double time) {
+    public void update (double time, int elapsedSeconds) {
         //Update all creatures with movement etc
         if (!this.creatures.isEmpty()) {
             for (Creature mob : this.creatures) { //Mobs do whatever mobs do
-                mob.update(time);
+                mob.update(time, elapsedSeconds);
             }
         }
 
@@ -363,7 +362,7 @@ public class BattleMap {
      * @return Creature found at the coordinates
      */
     public MapObject getMobAtLocation(double xCoor, double yCoor) {
-        Generals.logger.info("Trying to find a mob at location " + xCoor + " x " + yCoor);
+        //Generals.logger.info("Trying to find a mob at location " + xCoor + " x " + yCoor);
         MapObject mobAtLocation = null;
         int spatialID = this.getSpatial(xCoor, yCoor);
         if (!this.creatureSpatial.isEmpty()) {
@@ -445,6 +444,193 @@ public class BattleMap {
         spatial.get(spatialID).add(mob);
     }
     
+    /** CheckCollisions for a given MapObjects
+    * Returns a List with all the objects that collide with MapObject o
+    * Now with quad tree to check only objects nearby
+    * @param o The MapObject to check collisions with
+    * @return a List with all the objects that collide with MapObject o
+    */
+    public ArrayList<MapObject> checkCollisions (MapObject o) {
+        
+        ArrayList<MapObject> collidingObjects = new ArrayList<>();
+        HashSet<Integer> mobSpatials = getSpatials(o);
+        //Spatials cover the creature collisions
+        for (Integer i : mobSpatials) {
+            addMapObjectCollisions(o, this.creatureSpatial.get(i), collidingObjects);
+        }
+        
+        //Check collisions for structures too
+        //For creatures, check the collision versus collisionmap first
+        //Note that this returns false on structures the creature is allowed to pass through
+        if (o instanceof Creature) {
+            if (collidesOnCollisionMap((Creature)o)) {
+                addMapObjectCollisions(o, this.structures, collidingObjects);
+            }
+            Iterator<MapObject> mobIter = collidingObjects.iterator();
+            while (mobIter.hasNext()) {
+                MapObject mob = mobIter.next();
+                if (((Creature)o).getCrossableTerrain().contains(mob.getCollisionLevel())) {
+                    mobIter.remove();
+                }
+            }
+        } else {
+            addMapObjectCollisions(o, this.structures, collidingObjects);
+        }
+        
+        
+        return collidingObjects;
+        
+    }
+
+    /**
+     * Check if a MapObject hits something on the collision map.
+     * Useful for pruning down the list of objects that needs true
+     * collision detection.
+     * TODO: using this, a HUGE creature could get stuck on certain structures?
+     * @param mob
+     * @return True if collision map had something at mobs coordinates
+     */
+    private boolean collidesOnCollisionMap(Creature mob) {
+        Double[] upleft = mob.getCorner(Direction.UPLEFT);
+        Double[] upright = mob.getCorner(Direction.UPRIGHT);
+        Double[] downleft = mob.getCorner(Direction.DOWNLEFT);
+        Double[] downright = mob.getCorner(Direction.DOWNRIGHT);
+        if (this.collisionMap.isBlocked(mob.getCrossableTerrain(),(int)(upleft[0]/collisionMap.nodeSize), (int)(upleft[1]/collisionMap.nodeSize))) return true;
+        if (this.collisionMap.isBlocked(mob.getCrossableTerrain(),(int)(upright[0]/collisionMap.nodeSize), (int)(upright[1]/collisionMap.nodeSize))) return true;
+        if (this.collisionMap.isBlocked(mob.getCrossableTerrain(),(int)(downleft[0]/collisionMap.nodeSize), (int)(downleft[1]/collisionMap.nodeSize))) return true;
+        return (this.collisionMap.isBlocked(mob.getCrossableTerrain(),(int)(downright[0]/collisionMap.nodeSize), (int)(downright[1]/collisionMap.nodeSize)));
+    }
+
+    /**
+     * Check the supplied iterable list of objects for collisions
+     * The method is supplied an arraylist instead of returning one,
+     * because same arraylist may go through several cycles of addMapObjectCollisions
+     * @param o MapObject to check collisions for
+     * @param mapObjectsToCheck List of objects
+     * @param collidingObjects List to add the colliding objects on
+     */
+    private void addMapObjectCollisions(MapObject mob, Iterable mapObjectsToCheck, ArrayList collidingObjects) {         
+        if (mapObjectsToCheck == null) return;
+        Iterator<MapObject> mobIter = mapObjectsToCheck.iterator();
+        while ( mobIter.hasNext() )
+        {
+            MapObject collidingObject = mobIter.next();
+            if (collidingObject.equals(mob)) continue;
+            //If the objects are further away than their combined width/height, they cant collide
+            if ((Math.abs(collidingObject.getCenterXPos() - mob.getCenterXPos())
+                 > (collidingObject.getWidth() + mob.getWidth()))
+                || (Math.abs(collidingObject.getCenterYPos() - mob.getCenterYPos())
+                 > (collidingObject.getHeight() + mob.getHeight()))) {
+                //Objects are far enough from oneanother
+            } else {
+                if (!collidingObject.equals(mob) && mob.intersects(collidingObject)) { 
+                    // Colliding with yourself is not really a collision
+                    //Mists.logger.info(mob.getName()+" collided with "+collidingObject.getName());
+                    //if (collidingObject instanceof Structure) Mists.logger.info("Collision between "+mob.getName()+" and "+collidingObject.getName()+" ID:"+collidingObject.getID());
+                    collidingObjects.add(collidingObject);
+                }
+            }
+            
+        }
+    }
+
+    /**
+     * Check Collisions for a line drawn between two points.
+     * This is useful for determining for example line of sight
+     * @param xStart x Coordinate of the starting point
+     * @param yStart y Coordinate of the starting point
+     * @param xGoal x Coordinate of the far end
+     * @param yGoal y Coordinate of the far end
+     * @return list with all the colliding mapObjects(Creatures and Structures)
+     */
+    public ArrayList<MapObject> checkCollisions(double xStart, double yStart, double xGoal, double yGoal) {
+        ArrayList<MapObject> collidingObjects = new ArrayList<>();
+        double xDistance = xGoal - xStart;
+        double yDistance = yGoal - yStart;
+        Line line = new Line(xStart, yStart, xGoal, yGoal);
+        Iterator<Creature> creaturesIter = creatures.iterator();
+        while ( creaturesIter.hasNext() )
+        {
+            MapObject collidingObject = creaturesIter.next();
+            //If the objects are further away than their combined width/height, they cant collide
+            if ((Math.abs(collidingObject.getCenterXPos() - xStart)
+                 > (collidingObject.getWidth() + Math.abs(xDistance)))
+                || (Math.abs(collidingObject.getCenterYPos() - yStart)
+                 > (collidingObject.getHeight() + Math.abs(yDistance)))) {
+                //Objects are far enough from oneanother
+            } else {
+                if (collidingObject.intersects(line) ) 
+                 {
+                    collidingObjects.add(collidingObject);
+                }
+            }
+            
+        }
+        Iterator<Structure> structuresIter = structures.iterator();
+        while ( structuresIter.hasNext() )
+        {
+            MapObject collidingObject = structuresIter.next();
+            //If the objects are further away than their combined width/height, they cant collide
+            if ((Math.abs(collidingObject.getCenterXPos() - xStart)
+                 > (collidingObject.getWidth() + Math.abs(xDistance)))
+                || (Math.abs(collidingObject.getCenterYPos() - yStart)
+                 > (collidingObject.getHeight() + Math.abs(yDistance)))) {
+                //Objects are far enough from oneanother
+            } else {
+                if (collidingObject.intersects(line)) 
+                 {
+                    collidingObjects.add(collidingObject);
+                }
+            }
+            
+        }
+        
+        
+        return collidingObjects;
+    }
+    
+    public EnumSet<Direction> collidedSides (MapObject mob) {
+        ArrayList<MapObject> collidingObjects = this.checkCollisions(mob); //Get the colliding object(s)
+        return collidedSides(mob, collidingObjects, this.currentZone.getWidth(), this.currentZone.getHeight());
+    }
+    
+    public static EnumSet<Direction> collidedSides (MapObject mob, ArrayList<MapObject> collidingObjects, double mapWidth, double mapHeight) {
+        EnumSet<Direction> collidedDirections = EnumSet.of(Direction.STAY);
+        for (MapObject collidingObject : collidingObjects) {
+            //Mists.logger.log(Level.INFO, "{0} bumped into {1}", new Object[]{this, collidingObject});
+            double collidingX = collidingObject.getCenterXPos();//+(collidingObject.getSprite().getWidth()/2);
+            double collidingY = collidingObject.getCenterYPos();//+(collidingObject.getSprite().getHeight()/2);
+            double thisX = mob.getCenterXPos();//+(this.getSprite().getWidth()/2);
+            double thisY = mob.getCenterYPos();//+(this.getSprite().getHeight()/2);
+            double xDistance = (thisX - collidingX);
+            double yDistance = (thisY - collidingY);
+            if (Math.abs(xDistance) >= Math.abs(yDistance)) {
+                //Collided primary on the X (Left<->Right)
+                if (mob.getCenterXPos() <= collidingObject.getCenterXPos()) {
+                    //CollidingObject is RIGHT of the mob
+                    collidedDirections.add(Direction.RIGHT);
+                } else {
+                    //CollidingObject is LEFT of the mob
+                    collidedDirections.add(Direction.LEFT);
+                }
+            } else {
+                //Collided primary on the Y (Up or Down)
+                if (mob.getCenterYPos() >= collidingObject.getCenterYPos()) {
+                    //CollidingObject is UP of the mob
+                    collidedDirections.add(Direction.UP);
+                } else {
+                    //CollidingObject is DOWN of the mob
+                    collidedDirections.add(Direction.DOWN);
+                }
+            }
+        }
+        if (mob.getXPos() <= 0) collidedDirections.add(Direction.LEFT);
+        if (mob.getYPos() <= 0) collidedDirections.add(Direction.UP);
+        if (mob.getCenterXPos() >= mapWidth) collidedDirections.add(Direction.RIGHT);
+        if (mob.getCenterYPos() >= mapHeight) collidedDirections.add(Direction.DOWN);
+        return collidedDirections;
+    }
+
     /**
      * Get all the spatial hash IDs a given mob is located in
      * @param mob MapObject to check for

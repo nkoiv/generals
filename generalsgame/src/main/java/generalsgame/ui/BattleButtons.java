@@ -11,6 +11,8 @@ import java.util.logging.Level;
 
 import generalsgame.GameController;
 import generalsgame.Generals;
+import generalsgame.commands.Command;
+import generalsgame.gamestate.BattleState;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.MouseEvent;
 
@@ -53,10 +55,10 @@ public class BattleButtons {
         }
 
         @Override
-        public void handleMouseEvent(MouseEvent me) {
-            if (me.getEventType() == MouseEvent.MOUSE_RELEASED) {
-                Generals.logger.log(Level.INFO, "{0} was clicked", this.getName());
-            }
+        public void buttonPress() {
+            BattleState s = (BattleState)this.game.currentState;
+            s.commandWithMouse(Command.MOVE);
+            Generals.logger.log(Level.INFO, "{0} was clicked", this.getName());
         }
 
 

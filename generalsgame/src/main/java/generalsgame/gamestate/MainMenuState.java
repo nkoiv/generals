@@ -98,7 +98,7 @@ public class MainMenuState implements GameState {
     }
 
     @Override
-    public void tick(double time, ArrayList<KeyCode> pressedButtons, ArrayList<KeyCode> releasedButtons) {
+    public void tick(double time, int elapsedSeconds, ArrayList<KeyCode> pressedButtons, ArrayList<KeyCode> releasedButtons) {
         //No game logic to perform in game menu
         //perhaps consider adding in some minigame? :)
     }

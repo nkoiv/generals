@@ -113,7 +113,7 @@ public class Generals extends Application {
         {
             final double startNanoTime = System.nanoTime();
             double previousNanoTime = 0;
-            
+            int runningTime = 0;
             @Override
             public void handle(long currentNanoTime)
             {
@@ -124,9 +124,10 @@ public class Generals extends Application {
                 
                 double elapsedSeconds = (currentNanoTime - previousNanoTime) / 1000000000.0;
                 previousNanoTime = currentNanoTime;
+                runningTime = (int)Math.floor((currentNanoTime - startNanoTime) / 1000000000.0);
                 //Do things:
 
-                game.tick(elapsedSeconds, pressedButtons, releasedButtons); 
+                game.tick(elapsedSeconds, runningTime, pressedButtons, releasedButtons); 
                 releasedButtons.clear();
                 game.render();
                 //System.out.println("FPS : " + (int)(1/elapsedSeconds));
@@ -197,6 +198,8 @@ public class Generals extends Application {
     private void loadLibraries (Canvas gameCanvas, Canvas uiCanvas) {
         setupGraphicsLibrary();
         logger.info("Graphics library initialized");
+        loadCursors();
+        logger.info("Cursors loaded");
 
     }
 
@@ -204,6 +207,22 @@ public class Generals extends Application {
         Generals.graphLibrary = new GraphicsLibrary();
         GraphicsLibrary.initializeGraphicsLibrary(graphLibrary);
         
+    }
+
+    private void loadCursors() {
+    	cursors = new HashMap<>();
+    	cursors.put("handblue",new ImageCursor(graphLibrary.getImage("cursorHandblue")));
+    	cursors.put("handbeige", new ImageCursor(graphLibrary.getImage("cursorHandbeige")));
+		cursors.put("handgrey", new ImageCursor(graphLibrary.getImage("cursorHandgrey")));
+    	
+		cursors.put("gauntletblue",new ImageCursor(graphLibrary.getImage("cursorGauntletblue")));
+    	cursors.put("gauntletbronze", new ImageCursor(graphLibrary.getImage("cursorGauntletbronze")));
+		cursors.put("gauntletgrey", new ImageCursor(graphLibrary.getImage("cursorGauntletgrey")));
+    	
+		cursors.put("swordGold",new ImageCursor(graphLibrary.getImage("cursorSwordgold")));
+    	cursors.put("swordSilver", new ImageCursor(graphLibrary.getImage("cursorSwordsilver")));
+		cursors.put("swordBronze", new ImageCursor(graphLibrary.getImage("cursorSwordbronze")));
+    	
     }
 
 

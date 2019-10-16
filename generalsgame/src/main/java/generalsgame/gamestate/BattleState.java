@@ -8,6 +8,9 @@ import java.util.logging.Level;
 
 import generalsgame.GameController;
 import generalsgame.Generals;
+import generalsgame.commands.Command;
+import generalsgame.commands.MoveCommand;
+import generalsgame.gameobjects.Creature;
 import generalsgame.gameobjects.MapObject;
 import generalsgame.ui.AudioControls;
 import generalsgame.ui.BattleButtons;
@@ -42,17 +45,14 @@ public class BattleState implements GameState {
     private final TreeSet<UIComponent> drawOrder;
     private TextPanel infobox;
     private CombatPopup sct;
-    
-    private boolean movingWithMouse = false;
-    private double movingTowardsX;
-    private double movingTowardsY;
+    private int mouseCommand;
 
     public BattleState(GameController game) {
         Generals.logger.info("Building a new BattleState...");
         this.game = game;
         this.uiComponents = new HashMap<>();
         this.drawOrder = new TreeSet<>();
-        
+        this.mouseCommand = -1;        
 
     }
 
@@ -75,11 +75,11 @@ public class BattleState implements GameState {
      * @param releasedButtons  List of buttons released by the user
      */
     @Override
-    public void tick(double time, ArrayList<KeyCode> pressedButtons, ArrayList<KeyCode> releasedButtons) {
+    public void tick(double time, int elapsedSeconds, ArrayList<KeyCode> pressedButtons, ArrayList<KeyCode> releasedButtons) {
         if (game.getCurrentMap() == null) {
             return;
         }
-        game.getCurrentMap().update(time);
+        game.getCurrentMap().update(time, elapsedSeconds);
         this.sct.tick(time);
     }
     
@@ -184,6 +184,60 @@ public class BattleState implements GameState {
         return actionBar;
     }
 
+    /**
+     * Activate a waiting action towards the mouse cursor if a button is pressed
+     * @param me
+     */
+    private void commandWithMouse(MouseEvent me) {
+        if (this.mouseCommand == -1 || game.getCurrentMap().getTargets().isEmpty()) return;
+        if (this.game.getCurrentMap().getTargets().get(0) instanceof Creature ) {
+            Creature target = (Creature)this.game.getCurrentMap().getTargets().get(0);
+            Command command;
+            //A creature is targetted, so give it the current command in mouse
+            if ((me.getEventType() == MouseEvent.MOUSE_CLICKED || me.getEventType() == MouseEvent.MOUSE_PRESSED || me.getEventType() == MouseEvent.MOUSE_RELEASED) && me.getButton() == MouseButton.PRIMARY) {
+                //TODO: Switch cases for various commands
+                command = new MoveCommand(
+                    target,
+                     me.getSceneX()-game.getCurrentMap().getLastxOffset(),
+                      me.getSceneY()-game.getCurrentMap().getLastyOffset(),
+                      game.getCurrentTime(),
+                      game.getCurrentTime() + 4
+                      );
+                    
+                target.setCommand(command);
+                Generals.logger.info(target.getName() + " was given command " + command.getName());
+                target.addTextPopup(command.getName() + " command given!");
+                this.cancelCommandWithMouse();
+
+            } else if (me.getButton() == MouseButton.SECONDARY) {
+                cancelCommandWithMouse();
+            }
+        } else {
+            Generals.logger.info("No creature foundon target list");
+        } 
+    }
+
+    /**
+     * Start casting an action with mouse, activating the action with mouseclick
+     * @param Command The action to trigger with mouseclick
+     */
+    public void commandWithMouse(int commandID) {
+    	this.mouseCommand = commandID;
+    	//TODO: Take the preferred cursor from config
+    	Generals.setCursor("handblue");
+    }
+    
+    /**
+     * Cancel the casting of an action, changing
+     * the cursor back to default.
+     */
+    public void cancelCommandWithMouse() {
+    	this.mouseCommand = -1;
+    	//TODO: Take the default cursor from config
+    	Generals.setCursor("default");
+    }
+    
+
 
     @Override
     public GameController getGC() {
@@ -213,6 +267,10 @@ public class BattleState implements GameState {
             return;
         }
         this.infobox.setText(Overlay.generateInfoBoxText(game.getCurrentMap().getTargets().get(0)));
+    }
+
+    public void setMouseCommand(int commandID) {
+        this.mouseCommand = commandID;
     }
 
     @Override
@@ -255,6 +313,12 @@ public class BattleState implements GameState {
     
     @Override
     public void handleMouseEvent(MouseEvent me) {
+        if (game.getCurrentMap() != null ) {
+            if (mouseCommand != -1) {
+                //Generals.logger.info("Commanding with mouse...");
+                commandWithMouse(me);
+            } 
+        }
         //See if there's an UI component to click
         if (me.getEventType() == MouseEvent.MOUSE_CLICKED || me.getEventType() == MouseEvent.MOUSE_PRESSED || me.getEventType() == MouseEvent.MOUSE_RELEASED) this.handleClicks(me);
         if (me.getEventType() == MouseEvent.MOUSE_DRAGGED) this.handleMouseDrags(me);
@@ -294,16 +358,7 @@ public class BattleState implements GameState {
         double clickY = me.getY();
         double xOffset = this.game.getCurrentMap().getLastxOffset();
         double yOffset = this.game.getCurrentMap().getLastyOffset();
-        if (me.getButton() == MouseButton.PRIMARY && me.getEventType() == MouseEvent.MOUSE_PRESSED)
-            movingWithMouse = true;
-        if (me.getButton() == MouseButton.PRIMARY && me.getEventType() == MouseEvent.MOUSE_RELEASED)
-            movingWithMouse = false;
-        if (me.getButton() == MouseButton.SECONDARY && me.getEventType() == MouseEvent.MOUSE_RELEASED) {
-            return true;
-        }
         if (me.getButton() == MouseButton.PRIMARY && me.getEventType() == MouseEvent.MOUSE_RELEASED) {
-            // use default action towards mouseclick coordinates
-            // game.locControls.playerAttackMove(clickX+xOffset, clickY+yOffset);
             // Select a target if possible
             MapObject mob = game.getCurrentMap().getMobAtLocation(xOffset + clickX, yOffset + clickY);
             if (mob == null) {

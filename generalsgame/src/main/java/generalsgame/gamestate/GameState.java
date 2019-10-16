@@ -40,7 +40,7 @@ public interface GameState {
     public void render(Canvas gameCanvas, Canvas uiCanvas);
     
     //Do things
-    public void tick(double time, ArrayList<KeyCode> pressedButtons, ArrayList<KeyCode> releasedButtons);
+    public void tick(double time, int elapsedSeconds, ArrayList<KeyCode> pressedButtons, ArrayList<KeyCode> releasedButtons);
     
     //Handle mouse events
     public void handleMouseEvent(MouseEvent me);

@@ -172,7 +172,7 @@ public class MapObject {
     * Update the position of the MapObject
     * @param time Amount of time passed since the last update
     */
-    public void update(double time) {
+    public void update(double time, int elapsedSeconds) {
         this.graphics.update(time);
     }
     
