@@ -3,7 +3,7 @@
  * and as long as you credit the author accordingly. For commercial purposes please contact the author.
  * The software is provided "as is" with absolutely no warranty of any kind.
  * Using this software is entirely up to you, and the author is in no way responsible for anything you do with it.
- * (c) nkoiv / Niko Koivumäki
+ * (c) nkoiv / Niko Koivumäki / #014416884
  */
 package generalsgame.gameobjects;
 
@@ -63,7 +63,7 @@ public class Structure extends MapObject {
     public void renderExtras (double xOffset, double yOffset, GraphicsContext gc) {
         if (!this.extraSprites.isEmpty()) {
             for (Sprite extraSprite : this.extraSprites) {
-                //Mists.logger.info("Rendering extra for " +this.getName());
+                //Generals.logger.info("Rendering extra for " +this.getName());
                 extraSprite.render(xOffset, yOffset, gc);
             }
         }

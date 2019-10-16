@@ -1,7 +1,9 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * This software (code) is free to use as it is, as long as it's not used for commercial purposes
+ * and as long as you credit the author accordingly. For commercial purposes please contact the author.
+ * The software is provided "as is" with absolutely no warranty of any kind.
+ * Using this software is entirely up to you, and the author is in no way responsible for anything you do with it.
+ * (c) nkoiv / Niko Koivumäki / #014416884
  */
 package generalsgame.util;
 
@@ -41,14 +43,14 @@ public abstract class Toolkit {
      */
     public static Direction getDirection(double xFrom, double yFrom, double xTo, double yTo) {
         double angle = angleFromCoordinates(xFrom, yFrom, xTo, yTo);
-        //Mists.logger.info("Angle before conversion: "+angle);
+        //Generals.logger.info("Angle before conversion: "+angle);
         //Convert the angle from -180 to +180 into 0 to 360
         if (angle < 0) {
             double dif = Math.abs(angle);
             dif = 180-dif;
             angle = 180+dif;
         }
-        //Mists.logger.info("Giving direction to angle "+angle);
+        //Generals.logger.info("Giving direction to angle "+angle);
         Direction direction = Direction.STAY;
         if (angle < 22) {
             direction = Direction.RIGHT;
@@ -69,7 +71,7 @@ public abstract class Toolkit {
         } else if (angle >=337) {
             direction = Direction.RIGHT;
         }
-        //Mists.logger.info("Direction is : "+direction);
+        //Generals.logger.info("Direction is : "+direction);
         return direction;
     }
     
@@ -85,7 +87,7 @@ public abstract class Toolkit {
     public static double angleFromCoordinates(double xFrom, double yFrom, double xTo, double yTo) {
         double deltaX = xTo - xFrom;
         double deltaY = yTo - yFrom;
-        //Mists.logger.info("Angle from "+xFrom+"x"+yFrom+" to "+xTo+"x"+yTo+" is "+(Math.atan2(deltaY, deltaX)*180.0/Math.PI));
+        //Generals.logger.info("Angle from "+xFrom+"x"+yFrom+" to "+xTo+"x"+yTo+" is "+(Math.atan2(deltaY, deltaX)*180.0/Math.PI));
         return Math.atan2(deltaY, deltaX)*180.0/Math.PI;
     }
     

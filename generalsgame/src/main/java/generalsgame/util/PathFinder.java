@@ -1,7 +1,9 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * This software (code) is free to use as it is, as long as it's not used for commercial purposes
+ * and as long as you credit the author accordingly. For commercial purposes please contact the author.
+ * The software is provided "as is" with absolutely no warranty of any kind.
+ * Using this software is entirely up to you, and the author is in no way responsible for anything you do with it.
+ * (c) nkoiv / Niko Koivumäki / #014416884
  */
 package generalsgame.util;
 
@@ -56,7 +58,7 @@ public class PathFinder {
         //Get the direction towards the center of the next tile on the path
         double xChange = (targetNode.getX() * this.getTileSize())+(this.getTileSize()/2) - startX;
         double yChange = (targetNode.getY() * this.getTileSize())+(this.getTileSize()/2) - startY;
-        //Mists.logger.log(Level.INFO, "Path from {0},{1} ({2},{3}) to {4},{5}({6},{7})", new Object[]{startX, startY, (int)startX/this.getTileSize(), (int)startY/this.getTileSize(),targetNode.getX(),targetNode.getY(), (targetNode.getX() * this.getTileSize())+(this.getTileSize()/2), (targetNode.getY() * this.getTileSize())+(this.getTileSize()/2)});
+        //Generals.logger.log(Level.INFO, "Path from {0},{1} ({2},{3}) to {4},{5}({6},{7})", new Object[]{startX, startY, (int)startX/this.getTileSize(), (int)startY/this.getTileSize(),targetNode.getX(),targetNode.getY(), (targetNode.getX() * this.getTileSize())+(this.getTileSize()/2), (targetNode.getY() * this.getTileSize())+(this.getTileSize()/2)});
         return getDirection(xChange, yChange);
      }
 
@@ -65,7 +67,7 @@ public class PathFinder {
         //Return the (center) coordinates of the next tile on path
         double xCoord = (targetNode.getX()*this.getTileSize()) + (this.getTileSize()/2);
         double yCoord = (targetNode.getX()*this.getTileSize()) + (this.getTileSize()/2);
-        //Mists.logger.log(Level.INFO, "Path from {0},{1} ({2},{3}) to {4},{5}", new Object[]{startX, startY, (int)startX/this.getTileSize(), (int)startY/this.getTileSize(), xCoord, yCoord});
+        //Generals.logger.log(Level.INFO, "Path from {0},{1} ({2},{3}) to {4},{5}", new Object[]{startX, startY, (int)startX/this.getTileSize(), (int)startY/this.getTileSize(), xCoord, yCoord});
         return new double[]{xCoord, yCoord};
     }
     
@@ -86,7 +88,7 @@ public class PathFinder {
         if (pathToGoal == null || pathToGoal.getLength()==0) {
             //Got an empty path. Probably means no route was found.
             //Just head in the general direction of the target.
-            //Mists.logger.info("No path found, giving the Node of the target");
+            //Generals.logger.info("No path found, giving the Node of the target");
             pathToGoal.addStep(new Node(gX, gY));
             return pathToGoal;
         } else {
@@ -100,7 +102,7 @@ public class PathFinder {
     private Node nextTileOnPath(double unitSize, List<Integer> crossableTerrain,double startX, double startY, double goalX, double goalY) {
         int clearanceNeed = (int)(unitSize/this.map.getNodeSize());
         //if (unitSize%this.map.getNodeSize() > 0) clearanceNeed++;
-        //Mists.logger.info("Clearance needed: "+clearanceNeed+" (unit size"+unitSize+", nodesize "+this.map.getNodeSize());
+        //Generals.logger.info("Clearance needed: "+clearanceNeed+" (unit size"+unitSize+", nodesize "+this.map.getNodeSize());
 
         /*
         * The units are in freely moving double -type coordinates on the game map
@@ -116,12 +118,12 @@ public class PathFinder {
         if (pathToGoal == null || pathToGoal.getLength()==0) {
             //Got an empty path. Probably means no route was found.
             //Just head in the general direction of the target.
-            //Mists.logger.info("No path found, giving the Node of the target");
+            //Generals.logger.info("No path found, giving the Node of the target");
             return new Node(gX, gY);
         }
-        //Mists.logger.info("Goal was at ["+gX+","+gY+"] got the path:" + pathToGoal.toString());
+        //Generals.logger.info("Goal was at ["+gX+","+gY+"] got the path:" + pathToGoal.toString());
         if (pathToGoal.getLength() < 2) {
-            //Mists.logger.info("Next to goal, returning node the goal is at ");
+            //Generals.logger.info("Next to goal, returning node the goal is at ");
             return pathToGoal.getNode(pathToGoal.getLength()-1);
         } else {
             //Check if there's corners we might get stuck into:
@@ -255,11 +257,11 @@ public class PathFinder {
     */ 
     public static int[][] getClearanceMap (int crossableTerrain, CollisionMap collisionMap) {
         int[][] clearanceMap = new int[collisionMap.getMapTileWidth()][collisionMap.getMapTileHeight()];        
-       // Mists.logger.log(Level.INFO, "Clearance map generation started. Size of map: [{0},{1}]", new Object[]{collisionMap.getMapTileWidth(), collisionMap.getMapTileHeight()});
+       // Generals.logger.log(Level.INFO, "Clearance map generation started. Size of map: [{0},{1}]", new Object[]{collisionMap.getMapTileWidth(), collisionMap.getMapTileHeight()});
         //Check through all the tiles on the collisionMap and calculate their clearanceLevels
         for (int y=0;y<collisionMap.getMapTileHeight();y++) {  //collisionMap.getMapTileHeight()
             for (int x=0;x<collisionMap.getMapTileWidth();x++) { // collisionMap.getMapTileWidth()
-                //Mists.logger.info("Starting work at ["+x+","+y+"]");
+                //Generals.logger.info("Starting work at ["+x+","+y+"]");
                 if (collisionMap.isBlocked(crossableTerrain, x, y)) { 
                     clearanceMap[x][y] = 0; // Blocked tiles are given value of 0. Only sizeless things can past through.
                 } else { //Coordinates were not blocked, so we can start iterating clearance levels
@@ -275,7 +277,7 @@ public class PathFinder {
                     int lap = 0;
                     while (!blocked) { //keep building the are until we hit an obstacle
                         lap++;
-                        //Mists.logger.info("Doing lap "+lap+" at ["+x+","+y+"]");
+                        //Generals.logger.info("Doing lap "+lap+" at ["+x+","+y+"]");
                         //update the Clearance levels on current box
                         for (int row=0;row<lap;row++) {
                             for (int column=0;column<lap;column++) {
@@ -302,10 +304,10 @@ public class PathFinder {
                                 }
                             }
                         }
-                        //Mists.logger.info(edges.size()+" edges to check in total");
+                        //Generals.logger.info(edges.size()+" edges to check in total");
                         //Go through the current edges and see if we can expand
                         while (edges.size() > 0 && !blocked) {
-                            //Mists.logger.info("Edges left to do: " +edges.size());
+                            //Generals.logger.info("Edges left to do: " +edges.size());
                             //Check if this tile on the edge is blocked
                             if (collisionMap.isBlocked(crossableTerrain, edges.get(0)[0], edges.get(0)[1])) {
                                 blocked = true;
@@ -313,7 +315,7 @@ public class PathFinder {
                             //Remove it from the list 
                             edges.remove(0); 
                         }
-                        //if(blocked) Mists.logger.info("Hit a block with ["+x+","+y+"] on round "+lap);
+                        //if(blocked) Generals.logger.info("Hit a block with ["+x+","+y+"] on round "+lap);
                         //System.out.println("Doing ["+x+","+y+"], lap "+lap);
                         //this.printArrayMap(clearanceMap);
                         //System.out.println("");

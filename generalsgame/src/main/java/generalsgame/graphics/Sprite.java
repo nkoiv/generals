@@ -1,7 +1,9 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * This software (code) is free to use as it is, as long as it's not used for commercial purposes
+ * and as long as you credit the author accordingly. For commercial purposes please contact the author.
+ * The software is provided "as is" with absolutely no warranty of any kind.
+ * Using this software is entirely up to you, and the author is in no way responsible for anything you do with it.
+ * (c) nkoiv / Niko Koivumäki / #014416884
  */
 package generalsgame.graphics;
 
@@ -393,7 +395,7 @@ public class Sprite extends MovingGraphics
      */
     
     public static boolean pixelCollision(double x1, double y1, Image image1, double x2, double y2, Image image2) {
-        //Mists.logger.log(Level.INFO, "pixel collision detection at {0}x{1} - {2}x{3}", new Object[]{x1, y2, x2, y2});
+        //Generals.logger.log(Level.INFO, "pixel collision detection at {0}x{1} - {2}x{3}", new Object[]{x1, y2, x2, y2});
     	if (image1 == null || image2 == null) return false;
         PixelReader pr1 = image1.getPixelReader();
         PixelReader pr2 = image2.getPixelReader();
@@ -424,10 +426,10 @@ public class Sprite extends MovingGraphics
                 if (((pr1.getArgb(nx,ny) & 0xFF000000) != 0x00) &&
                     ((pr2.getArgb(nx1,ny1) & 0xFF000000) != 0x00)) {
                    // collide!!
-                   //Mists.logger.info("COLLISION AT "+nx+"x"+ny+" - "+nx1+"x"+ny1);
-                   //Mists.logger.info("Color for mob:"+pr1.getColor(nx, ny)+", Color for collision: "+pr2.getColor(nx1, ny1));
-                   //Mists.MistsGame.debugCanvas.getGraphicsContext2D().setFill(pr2.getColor(nx1, ny1));
-                   //Mists.MistsGame.debugCanvas.getGraphicsContext2D().fillRect(x2+nx1-Mists.MistsGame.getCurrentLocation().getLastxOffset()-1, y2+ny1-Mists.MistsGame.getCurrentLocation().getLastyOffset()-1, 3, 3);
+                   //Generals.logger.info("COLLISION AT "+nx+"x"+ny+" - "+nx1+"x"+ny1);
+                   //Generals.logger.info("Color for mob:"+pr1.getColor(nx, ny)+", Color for collision: "+pr2.getColor(nx1, ny1));
+                   //Generals.GeneralsGame.debugCanvas.getGraphicsContext2D().setFill(pr2.getColor(nx1, ny1));
+                   //Generals.GeneralsGame.debugCanvas.getGraphicsContext2D().fillRect(x2+nx1-Generals.GeneralsGame.getCurrentLocation().getLastxOffset()-1, y2+ny1-Generals.GeneralsGame.getCurrentLocation().getLastyOffset()-1, 3, 3);
                    return true;
                 }
             } catch (Exception e) {
@@ -435,7 +437,7 @@ public class Sprite extends MovingGraphics
             }
           }
         }
-        //Mists.logger.info("Returning false from pixel collision");
+        //Generals.logger.info("Returning false from pixel collision");
         return false;
     }
     

@@ -1,8 +1,12 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * This software (code) is free to use as it is, as long as it's not used for commercial purposes
+ * and as long as you credit the author accordingly. For commercial purposes please contact the author.
+ * The software is provided "as is" with absolutely no warranty of any kind.
+ * Using this software is entirely up to you, and the author is in no way responsible for anything you do with it.
+ * (c) nkoiv / Niko Koivumäki / #014416884
  */
+
+
 package generalsgame.util;
 
 import java.util.ArrayList;
@@ -63,13 +67,13 @@ public class CollisionMap {
      */
     
     public void updateCollisionLevels() {
-        //Mists.logger.info("Updating collisionmap for "+this.location.getName());
+        //Generals.logger.info("Updating collisionmap for "+this.location.getName());
         //double startTime = System.currentTimeMillis();
         //Clear the map
         clearNodeMap();
         //Go through all the nodes and check the location if it has something at them
         updateMobsOnNodeMap();
-        //Mists.logger.log(Level.INFO, "Collision update done in {0}ms", (System.currentTimeMillis()-startTime));
+        //Generals.logger.log(Level.INFO, "Collision update done in {0}ms", (System.currentTimeMillis()-startTime));
     }
     
     
@@ -98,9 +102,9 @@ public class CollisionMap {
      */
     private void updateMobsOnNodeMap() {
         ArrayList<Structure> mobs = this.map.getStructures();
-        //Mists.logger.info("Moblist has " +mobs.size()+" objects");
+        //Generals.logger.info("Moblist has " +mobs.size()+" objects");
         for (MapObject mob : mobs) {
-            //Mists.logger.info("Doing collisionmapstuff for "+mob.getName());
+            //Generals.logger.info("Doing collisionmapstuff for "+mob.getName());
             //Mob blocks nodes from its top left corner...
             int mobXNodeStart = ((int)mob.getXPos() / nodeSize);
             int mobYNodeStart = ((int)mob.getYPos() / nodeSize);
@@ -110,18 +114,18 @@ public class CollisionMap {
             int mobCL = mob.getCollisionLevel();          
             //Structures mark all blocked nodes with collisionLevel
             if (mob instanceof Structure) {
-                //Mists.logger.info("This is a structure at "+mobYNodeStart+","+mobXNodeStart);
+                //Generals.logger.info("This is a structure at "+mobYNodeStart+","+mobXNodeStart);
                 if (mob.getCollisionLevel() == 0) continue; //CL 0 means anything can pass through
                 for (int row = mobYNodeStart; row <= mobYNodeEnd;row++ ) {
                     for (int column = mobXNodeStart; column <= mobXNodeEnd;column++) {
-                        //Mists.logger.info("Should be setting some CL at "+column+","+row);
+                        //Generals.logger.info("Should be setting some CL at "+column+","+row);
                         if(this.isOnMap(column, row))
                             this.nodeMap[column][row].setCollisionLevel(mobCL);
-                            //Mists.logger.info("Added CL "+mobCL+" at "+column+","+row);
+                            //Generals.logger.info("Added CL "+mobCL+" at "+column+","+row);
                     }
                 }
             } else if (!this.structuresOnly) { //Creatures block only their original spot
-                //Mists.logger.info("This is NOT structure");
+                //Generals.logger.info("This is NOT structure");
                 //TODO: This is redundant old code that can never be reached
                 //If creatures are wanted on collisionmap, they need to be
                 //called in via location.getCreatures();
@@ -130,9 +134,9 @@ public class CollisionMap {
             }
             
             
-            //Mists.logger.info("["+mobXNode+","+mobYNode+"] has a "+mob.getName()+ ": set to CL "+mobCL);
+            //Generals.logger.info("["+mobXNode+","+mobYNode+"] has a "+mob.getName()+ ": set to CL "+mobCL);
         }
-        //Mists.logger.info("Collisionmap updated in "+(System.currentTimeMillis()-startTime)+"ms");
+        //Generals.logger.info("Collisionmap updated in "+(System.currentTimeMillis()-startTime)+"ms");
     }
     
     
