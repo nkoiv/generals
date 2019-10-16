@@ -52,6 +52,10 @@ public class BattleMap {
         this.addCreature(testUnit, 200, 200);
         this.screenFocus = testUnit;
 
+        Creature testUnit2 = new Creature("Also test", new Image("/images/Unit/medievalUnit_03.png"));
+        this.addCreature(testUnit2, 400, 270);
+
+
         this.localizeMap();
     }
 

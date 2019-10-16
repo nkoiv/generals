@@ -5,6 +5,7 @@
  * Using this software is entirely up to you, and the author is in no way responsible for anything you do with it.
  * (c) nkoiv / Niko Koivumäki / #014416884
  */
+
 package generalsgame.util;
 
 import java.util.List;

@@ -209,7 +209,7 @@ public class BattleState implements GameState {
                      me.getSceneX()-game.getCurrentMap().getLastxOffset(),
                       me.getSceneY()-game.getCurrentMap().getLastyOffset(),
                       game.getCurrentTime(),
-                      game.getCurrentTime() + 4
+                      game.getCurrentTime() + 3
                       );
                     
                 target.setCommand(command);

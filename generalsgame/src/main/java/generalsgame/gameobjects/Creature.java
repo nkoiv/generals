@@ -99,9 +99,12 @@ public class Creature extends MapObject {
     public void progressCommand(double time, int elapsedSeconds) {
         if (this.activeCommand == null) return;
         //Generals.logger.info("Progressing Command....");
+        Generals.logger.info(" - completion time: " + this.activeCommand.getCompletionTime() +" ElapsedSeconds:" + elapsedSeconds );
         this.activeCommand.tick(time);
-        if (this.activeCommand.getCompletionTime() == elapsedSeconds) {
+        if (this.activeCommand.getCompletionTime() <= elapsedSeconds) {
             this.activeCommand = null;
+            this.stopMovement();
+            Generals.logger.info("Stopped movement");
         }
     }
 
