@@ -9,12 +9,18 @@ import java.util.logging.Level;
 import generalsgame.GameController;
 import generalsgame.Generals;
 import generalsgame.gameobjects.MapObject;
+import generalsgame.ui.AudioControls;
+import generalsgame.ui.BattleButtons;
 import generalsgame.ui.CombatPopup;
+import generalsgame.ui.IconButton;
 import generalsgame.ui.Overlay;
 import generalsgame.ui.PopUpMenu;
 import generalsgame.ui.ScrollingPopupText;
+import generalsgame.ui.TextButton;
 import generalsgame.ui.TextPanel;
+import generalsgame.ui.TiledWindow;
 import generalsgame.ui.UIComponent;
+import generalsgame.ui.AudioControls.MuteMusicButton;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
@@ -122,6 +128,7 @@ public class BattleState implements GameState {
 
         if (gameMenuOpen) {
             try {
+                //Add a Controls image to display what buttons do - easy alternative to actual Help
                 Image controls = new Image("/images/controls.png");
                 uigc.drawImage(controls, screenWidth - controls.getWidth(), 50);
             } catch (Exception e) {
@@ -149,9 +156,34 @@ public class BattleState implements GameState {
         this.inConsole = false;
 
         this.sct = new CombatPopup();
+        this.addUIComponent(this.generateActionBar());
+        this.addUIComponent(generateGeneralBar());
         
     }
     
+    private TiledWindow generateGeneralBar(){
+        int buttonCount = 5;
+        TiledWindow generalBar = new TiledWindow(this, "GeneralButtons", 70, buttonCount*60, 0, 80);
+        generalBar.setBgOpacity(0.3);
+        IconButton menuButton = new BattleButtons.ToggleBattleMenuButton(game);
+        generalBar.addSubComponent(menuButton);
+        MuteMusicButton muteMusicButton = new AudioControls.MuteMusicButton();
+        generalBar.addSubComponent(muteMusicButton);        
+        generalBar.setRenderZ(-11);
+        return generalBar;
+    }
+
+    private TiledWindow generateActionBar() {
+        TiledWindow actionBar = new TiledWindow(this, "Actionbar", game.WIDTH, 80, 0, (game.HEIGHT - 80));
+        actionBar.setBgOpacity(0.3);
+        TextButton moveButton = new BattleButtons.CommandMoveButton(80, 60, this.game);
+        
+        actionBar.addSubComponent(moveButton);
+        
+        actionBar.setRenderZ(-10);
+        return actionBar;
+    }
+
 
     @Override
     public GameController getGC() {
@@ -349,7 +381,7 @@ public class BattleState implements GameState {
     public void updateUI() {
         //Move the actionbar to where it should be
         Generals.logger.info("Updating UI. Game dimensions: "+game.WIDTH+"x"+game.HEIGHT);
-        uiComponents.get("Actionbar").setPosition(0, (game.HEIGHT - 80));
+        uiComponents.get("Actionbar").setPosition(0, (game.HEIGHT - 120));
         if(gameMenuOpen && uiComponents.containsKey("GameMenu")) uiComponents.get("GameMenu").setPosition((game.WIDTH/2 - 110), 150);
     }
     

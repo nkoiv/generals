@@ -9,7 +9,6 @@ import java.util.Stack;
 import java.util.logging.Level;
 import java.util.Iterator;
 
-
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
@@ -17,6 +16,7 @@ import javafx.scene.shape.Line;
 
 import generalsgame.Direction;
 import generalsgame.gameobjects.*;
+import generalsgame.ui.Overlay;
 import generalsgame.util.CollisionMap;
 import generalsgame.util.PathFinder;
 
@@ -232,7 +232,16 @@ public class BattleMap {
         //Generals.logger.info("Offset: "+xOffset+","+yOffset);
         this.renderMap(gc, xOffset, yOffset);
         this.lastRenderedMapObjects = this.renderMobs(gc, xOffset, yOffset);
+        this.renderExtras(gc, xOffset, yOffset);
         //this.renderLights(sc, lastRenderedMapObjects, xOffset, yOffset);
+    }
+
+    private void renderExtras(GraphicsContext gc, double xOffset, double yOffset) {
+        if (!this.targets.isEmpty()) {
+            for (MapObject mob : this.targets) {
+                Overlay.drawTargettingCircle(gc, mob);
+            }
+        }
     }
 
         /**
